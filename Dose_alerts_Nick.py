@@ -9,7 +9,7 @@ drugs = ['KETOROLAC']
 #reg ex expression to grab exceeds max daily dose from Percent_Deviation_from_Dose
 def extract_percent_of_daily_dose(daily_dose_string):
     match = re.search(r'Exceeds maximum daily dose limit \((\d+)%\)', daily_dose_string)
-#r'^[Overridden|Cancelled|Viewed]'
+#   r'^[Overridden|Cancelled|Viewed]'
 #match.group(0) would return the whole phrase, match.group(1) returns the first number
     return match and int(match.group(1))
 
@@ -43,18 +43,36 @@ def generate_for_single(Ketorolac):
     df['single_dose_limit'].dropna(inplace=True)
     return df
 
+#search for 100 within daily_dose_limit, link to drug
+def Warning_Status_Ketorolac(daily_dose_ketorolac_100):
+    Ketorolac_100_warning = re.search(r'^[Overridden|Viewed|Cancelled]', daily_dose_ketorolac_100)
+    return Ketorolac_100_warning
+
+#map the warning status for ketorolac to apply regex to all in Warning_Status column
+def Overridden(Overridden_ketorolac):
+    df = pd.read_csv('Dose_Alerts_Edited.csv')
+    df['filter'] = [Overridden_ketorolac in x for x in df['Description'].tolist()]
+    df = df[df['filter']]
+    df['new_warning_status_Ketorolac'] = df['Warning_Status'].map(Warning_Status_Ketorolac)
+    df['new_warning_status_Ketorolac'].dropna(inplace=True)
+    return df
+
+for Overridden_ketorolac in drugs:
+    df = Overridden(Overridden_ketorolac)
+print df['new_warning_status_Ketorolac'].value_counts()
+
 #to print daily dose limit stats for ketorolac only
 for drug in drugs:
     df = generate_for_drug(drug)
 print 'Ketorolac Daily Dose Count'
 print df['daily_dose_limit'].value_counts()
-print df.groupby('Warning_Status').count()
+#print df.groupby('Warning_Status').count()
 
-#to print single dose limit stats for ketorolac only
+#to print single dose limit stats for ketorolac only: the "for Ketorolac in drugs" links the single_dose_limit to KETOROLAC rows only
 for Ketorolac in drugs:
     df = generate_for_single(Ketorolac)
 print 'Ketorolac Single Dose Count'
 print df['single_dose_limit'].value_counts()
 #of each value, how many of them were overrides/views/cancels
-print df.groupby('Warning_Status').count()
+#print df.groupby('Warning_Status').count()
 #df.groupby('Warning_Status').my_new_column.hist(alpha=0.4)
