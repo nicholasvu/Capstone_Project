@@ -1,3 +1,4 @@
+#trying to use RandomForestClassifier to organize the features and give each of them a weighted percentage into the overall clinical recommendation of whether a dose alert should be overridden/canceled/viewed
 import re
 import pandas as pd
 import numpy as np
