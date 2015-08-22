@@ -7,6 +7,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+df = pd.read_csv('Dose_Alerts_Edited.csv')
 def dose_alerts_for_a_drug(drug_name):
   df = pd.read_csv('Dose_Alerts_Edited.csv')
   #Recommended refactor:
@@ -69,6 +70,64 @@ def dose_alerts_for_a_drug_below(drug_name_below):
   print drug_name_below
   print grouped
   return df1
+
+#Percent_Deviation_from_Dose = strength_score (60% of total weight)
+
+#assign a strength of recommendation to the Provider_Type (15% of total weight)
+Strength_Score = {'Pharmacist': 8, 'Pharmacy Resident': 7, 'Nurse Practitioner': 6, 'Physician Assistant': 5, 'Attending Physician': 4, 'Resident': 3, 'Fellow': 2}
+Provider_Strength_Score = Strength_Score.get('Provider_Type', 1)
+
+#assign strength of recommendation to Patient_Hospital/Clinic (5% of total weight)
+Hospital_Score = {'LA JOLLA HOSPITAL HOD/OP': 2, 'UC SAN DIEGO MEDICAL CENTER - HILLCREST': 2, 'HILLCREST HOSPITAL HOD/OP': 2, 'MOORES UCSD CANCER CENTER': 2, 'UC SAN DIEGO MEDICAL CENTER - LA JOLLA': 2}
+Hospital_Strength_Score = Hospital_Score.get('Patient_Hospital/Clinic', 2)
+
+#assign strength of recommendation to Patient_Department (2% of total weight)
+Department_Score = {'LJ EMERGENCY DEPT': 1}
+Department_Strength_Score = Department_Score.get('Patient_Department', 1)
+
+#assign strength to interaction setting (5% of total weight)
+Setting_Score = {'MODEL PHARMACIST INTERACTIONS [1010]': 7, 'UC PHARMACIST INTERACTIONS - OB [1080]': 7}
+Setting_Strength_Score = Setting_Score.get('Interaction_Setting', 3)
+
+#assign strength to Source (8% of total weight)
+Source_Score = {'Verify Orders': 6, 'Enter Orders': 4}
+Source_Strength_Score = Source_Score.get('Source', 0)
+
+#assign strength to Context (2% of total weight)
+Context_Score = {'Inpatient': 7, 'Outpatient': 3}
+Context_Strength_Score = Context_Score.get('Context', 0)
+
+#assign strength to Same_OrderSet_Panels (2% of total weight)
+Panel_Score = {'N': 5, 'Y': 5}
+Same_OrderSet_Panels_Strength_Score = Panel_Score.get('Same_OrderSet_Panels', 5)
+
+#assign strength to Warning_Form_Shown_To_User (1% of total weight)
+Warning_Seen_Score = {'Y': 10, 'N': 0}
+Warning_Seen_Strength_Score = Warning_Seen_Score.get('Warning_Form_Shown_To_User', 0)
+
+#DataFrame.as_matrix()
+features_list = [Provider_Strength_Score, Hospital_Strength_Score, Department_Strength_Score, Setting_Strength_Score, Source_Strength_Score, Context_Strength_Score, Same_OrderSet_Panels_Strength_Score, Warning_Seen_Strength_Score]
+
+#following function used instead of if/else as hashed out in provider_strength_score below
+dict(zip(range(1 ,len(features_list)+1),features_list ))
+target = np.array(df['Warning_Status'].tolist())
+#Provider_Strength_Score = [8 if Provider_Type=='Pharmacist' else 7 if Provider_Type=='Pharmacy Resident'
+#else 6 if Provider_Type=='Nurse Practitioner' else 5 if Provider_Type=='Physician Assistant' else 4 if Provider_Type=='Attending Physician' else 3 if Provider_Type=='Resident' else 2 if Provider_Type=='Fellow' else 1 for Provider_Type in df['Provider_Type'].tolist()]
+
+#assess a level of importance to the hospital
+
+#assess a level of importance to the department
+
+#Resident
+#Transplant Coordinator
+#Fellow
+#Attending Physician
+#DataFrame.as_matrix(columns=None)
+#1. Create the feature_list
+#2. Transform the feature_list into a matrix
+#feature1. features2. feature3 .... featuren.
+#3. Create target vector: target = np.array(df['warning_status'].tolist())
+
 #dose_alerts_for_a_drug is a function/variable. drug_name is an object
 #dose_alerts_for_a_drug('VANCOMYCIN')
 #dose_alerts_for_a_drug('KETOROLAC')
@@ -90,15 +149,25 @@ df3 = dose_alerts_for_a_drug('VANCOMYCIN')
 df = dose_alerts_for_a_drug_single('FAMOTIDINE')
 df2 = dose_alerts_for_a_drug_below('FAMOTIDINE')
 df3 = dose_alerts_for_a_drug('FAMOTIDINE')
-y = df['Warning_Status']
-#x = df.drop(['Warning_Status', 'Date_Time', 'Patient', 'Alert_ID', 'Alert_DAT', 'Type', 'Source', 'Medications_Involved_in_warning_checking', 'Severity', 'Providery_Type', 'Override_Reason', 'Override_Comment', 'Dose_Checking_Percent_Allowance_for_Min_Dose', 'Order_Sets', 'Panels', 'Same_OrderSet_Panels'], axis=1)
-#redefine x to a new dataframe
+#df.shape()
+#TypeError: 'tuple' object is not callable
+
 x = pd.DataFrame()
+y = df['Warning_Status']
 #patch in as many columns as we want
 x['single_dose_exceeds'] = df['single_dose_exceeds']
 x['below_dose_minimum'] = df2['below_dose_minimum']
 x['daily_dose_exceeds'] = df3['daily_dose_exceeds']
 #can repeat method for other columns x['single_dose_exceeds'] = df['single_dose_exceeds']
+xtrain = x['single_dose_exceeds']
+
+#x = df.drop(['Warning_Status', 'Date_Time', 'Patient', 'Alert_ID', 'Alert_DAT', 'Type', 'Source', 'Medications_Involved_in_warning_checking', 'Severity', 'Provider_Type', 'Override_Reason', 'Override_Comment', 'Dose_Checking_Percent_Allowance_for_Min_Dose', 'Order_Sets', 'Panels', 'Same_OrderSet_Panels'], axis=1)
+#redefine x to a new dataframe
+
+msk = np.random.rand(len(df)) < 0.8
+train = df[msk]
+test = df[~msk]
+
 clf = RandomForestClassifier(n_estimators=50)
 print '=========='
 print x['single_dose_exceeds']
