@@ -2,8 +2,16 @@
 author: @nicholasvu
 08/26/2015 22:50
 
-Random Forest Classifier claims numbers of labels=1 does not match number of samples=6037. Number of samples in x and y match according to my records.
-Need to troubleshoot what issue is. Otherwise, program should run.
+This program simply organizes the Dose_Alerts_Edits.csv data for a list of
+drugs according to how much of the daily dose, single dose, and below minimum
+dose limits were exceeded. Then it assigns a score to the values under a specific
+list of features. Then the Random Forest Classifier will improve predictive accuracy.
+Then the program is supposed to print out a confusion matrix.
+
+Error: Random Forest Classifier claims numbers of labels=1 does not match
+number of samples=6037. Number of samples in x and y match according
+to my records. Need to troubleshoot what issue is. Otherwise, program should run.
+
 '''
 import re
 import pandas as pd
@@ -187,6 +195,3 @@ plt.colorbar()
 plt.ylabel('True Label')
 plt.xlabel('Predicted label')
 plt.show()
-
-#show classifier
-print clf
