@@ -41,7 +41,7 @@ def dose_alerts_for_a_drug(drug_name):
   df1 = df[df['filter'] == 1]
   df1 = df1.reset_index(drop=True)
 
-  # create a separate column for exceeds daily dose limit called 'daily_dose_exceeds'
+#create a separate column for exceeds daily dose limit called 'daily_dose_exceeds'
   list1 = []
   for j in range(len(df1)):
       if ('Exceeds maximum daily dose limit' in df1['Percent_Deviation_from_Dose'][j]):
@@ -51,8 +51,8 @@ def dose_alerts_for_a_drug(drug_name):
   df1['daily_dose_exceeds'] = list1
  #add the other two columns
   grouped = df1.groupby(['daily_dose_exceeds', 'warning_status']).count()
-  #print drug_name
-  #print grouped
+  print drug_name
+  print grouped
   return df1
 
 #create function to pull integer from Percent_Deviation_from_Dose column related to 'Exceeds maximum single dose limit' only
@@ -98,7 +98,6 @@ def dose_alerts_for_a_drug_below(drug_name_below):
   #print grouped
   return df1
 
-
 #CREATE FEATURES AND ASSIGN SCORES TO VALUES IN EACH FEATURE (lines 89-116)
 
 #assign a strength of recommendation to the Provider_Type (15% of total weight)
@@ -127,27 +126,28 @@ Same_OrderSet_Panels_Strength_Score = [5 if Same_OrderSet_Panels=='N' else 5 if 
 Warning_Seen_Strength_Score = [10 if Warning_Form_Shown_To_User=='Y' else 0 for Warning_Form_Shown_To_User in df['Warning_Form_Shown_To_User'].tolist()]
 
 #assign score to target vector 'warning_status'
-warning_strength_score = [3 if warning_status=='Overridden' else 2 if warning_status=='Cancelled' else 1 if warning_status=='viewed' else 0 for warning_status in df['warning_status'].tolist()]
+warning_strength_score = [3 if warning_status=='Overridden' else 2 if warning_status=='Canceled' else 1 if warning_status=='Viewed' else 0 for warning_status in df['warning_status'].tolist()]
 
-#assign list of medicines to analyze
-medicine_names = ['KETOROLAC', 'SODIUM CHLORIDE', 'LOPERAMIDE', 'VANCOMYCIN', 'DOCUSATE SODIUM', 'IPRATROPIUM', 'LORAZEPAM', 'LIDOCAINE-EPINEPHRINE', 'SODIUM BICARBONATE', 'DEXAMETHASONE',
-'IPRATROPIUM-ALBUTEROL', 'CALCIUM CHLORIDE', 'IBUPROFEN', 'CEFAZOLIN', 'PENTAMIDINE', 'ACETAZOLAMIDE', 'ENOXAPARIN', 'LACOSAMIDE', 'METHYLPREDNISOLONE', 'INFLIXIMAB', 'INSULIN REGULAR',
+#assign list of medicines to analyze medicine_names = ['KETOROLAC', 'SODIUM CHLORIDE', 'LOPERAMIDE', 'VANCOMYCIN', 'DOCUSATE SODIUM', 'IPRATROPIUM', 'LORAZEPAM', 'LIDOCAINE-EPINEPHRINE', 'SODIUM BICARBONATE', 'DEXAMETHASONE',
+medicine_names = ['IPRATROPIUM-ALBUTEROL', 'CALCIUM CHLORIDE', 'IBUPROFEN', 'CEFAZOLIN', 'PENTAMIDINE', 'ACETAZOLAMIDE', 'ENOXAPARIN', 'LACOSAMIDE', 'METHYLPREDNISOLONE', 'INFLIXIMAB', 'INSULIN REGULAR',
 'METOCLOPRAMIDE', 'PROGESTERONE', 'FLUPHENAZINE', 'GABAPENTIN', 'TORSEMIDE', 'CEFTAZIDIME', 'ESCITALOPRAM', 'CITALOPRAM', 'IMMUNE GLOBULIN', 'LEVETIRACETAM', 'FLUORESCEIN', 'OXYCODONE',
 'LIDOCAINE-EPINEPHRINE', 'INSULIN LISPRO', 'GENTAMICIN', 'TRASTUZUMAB', 'CARBOPLATIN', 'CARFILZOMIB', 'BUMETANIDE', 'FLUOROURACIL', 'OCTREOTIDE', 'ROCURONIUM', 'IFOSFAMIDE', 'MESNA',
 'BEVACIZUMAB', 'SULFAMETHOXAZOLE-TRIMETHOPRIM', 'DILTIAZEM', 'CITRIC ACID-SODIUM CITRATE', 'COLISTIMETHATE', 'DIVALPROEX', 'PHOSPHORUS', 'CETIRIZINE', 'MIDAZOLAM',
 'DOXORUBICIN', 'FENTANYL', 'TOPIRAMATE', 'BORTEZOMIB', 'LACTULOSE', 'PALONOSETRON', 'AMPICILLIN', 'DIAZEPAM', 'ONDANSETRON', 'MEROPENEM', 'FLUDARABINE', 'MAGNESIUM HYDROXIDE', 'PHENYLEPHRINE',
 'PLERIXAFOR']
-
+'''
 for i in medicine_names:
 
     df = dose_alerts_for_a_drug_single(i)
+    pdb.set_trace()
     df2 = dose_alerts_for_a_drug_below(i)
     df3 = dose_alerts_for_a_drug(i)
-
+'''
 #assign x to a pandas dataframe
 x = pd.DataFrame()
 #assign target vector to 'warning_status' column in an array
 y = np.array([warning_strength_score])
+y = y.transpose()
 
 #assign features to variable x
 x['Provider_Strength_Score'] = Provider_Strength_Score
@@ -170,7 +170,6 @@ clf = RandomForestClassifier(n_estimators=100, n_jobs=4)
 x = x.as_matrix()
 
 #fit the classifier using a multi-label indicator
-x, y = make_multilabel_classification(n_classes=4, n_labels=4, allow_unlabeled=True, return_indicator=True, random_state=1)
 clf.fit(x, y)
 
 # 1. split the data into a training set and a test set
