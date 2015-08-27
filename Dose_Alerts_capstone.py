@@ -52,7 +52,7 @@ def dose_alerts_for_a_drug(drug_name):
  #add the other two columns
   grouped = df1.groupby(['daily_dose_exceeds', 'warning_status']).count()
   print drug_name
-  print grouped
+  print list1
   return df1
 
 #create function to pull integer from Percent_Deviation_from_Dose column related to 'Exceeds maximum single dose limit' only
@@ -64,16 +64,18 @@ def dose_alerts_for_a_drug_single(drug_name_single):
   df1 = df1.reset_index(drop=True)
 
   # create a separate column called for single dose limit exceeded called 'single_dose_exceeds'
-  list1 = []
+  list2 = []
   for j in range(len(df1)):
       if ('Exceeds maximum single dose limit' in df1['Percent_Deviation_from_Dose'][j]):
-          list1.append(int(re.findall(r'Exceeds maximum single dose limit \((\d+)%\)', df1['Percent_Deviation_from_Dose'][j])[0]))
+          list2.append(int(re.findall(r'Exceeds maximum single dose limit \((\d+)%\)', df1['Percent_Deviation_from_Dose'][j])[0]))
       else:
-          list1.append(0)
-  df1['single_dose_exceeds'] = list1
+          list2.append(0)
+  df1['single_dose_exceeds'] = list2
   grouped = df1.groupby(['single_dose_exceeds', 'warning_status']).count()
   #print drug_name_single
   #print grouped
+  print drug_name_single
+  print list2
   return df1
 
 #create function to pull integer from Percent_Deviation_from_Dose column related to 'Below minimum dose limit' only
@@ -85,17 +87,17 @@ def dose_alerts_for_a_drug_below(drug_name_below):
   df1 = df1.reset_index(drop=True)
 
    # create a separate column for below minimum dose limit called 'below_dose_minimum'
-  list1 = []
+  list3 = []
   for j in range(len(df1)):
       if ('Below minimum dose limit' in df1['Percent_Deviation_from_Dose'][j]):
-          list1.append(int(re.findall(r'Below minimum dose limit \((\d+)%\)', df1['Percent_Deviation_from_Dose'][j])[0]))
+          list3.append(int(re.findall(r'Below minimum dose limit \((\d+)%\)', df1['Percent_Deviation_from_Dose'][j])[0]))
       else:
-          list1.append(0)
-  df1['below_dose_minimum'] = list1
+          list3.append(0)
+  df1['below_dose_minimum'] = list3
   #print list1[0]
   grouped = df1.groupby(['below_dose_minimum', 'warning_status']).count()
-  #print drug_name_below
-  #print grouped
+  print drug_name_below
+  print list3
   return df1
 
 #CREATE FEATURES AND ASSIGN SCORES TO VALUES IN EACH FEATURE (lines 89-116)
@@ -150,6 +152,7 @@ y = np.array([warning_strength_score])
 y = y.transpose()
 
 #assign features to variable x
+#x['single_dose_exceeds'] = df['single_dose_exceeds']
 x['Provider_Strength_Score'] = Provider_Strength_Score
 x['Hospital_Strength_Score'] = Hospital_Strength_Score
 x['Setting_Strength_Score'] = Setting_Strength_Score
@@ -174,8 +177,20 @@ clf.fit(x, y)
 
 # 1. split the data into a training set and a test set
 x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=0)
+pdb.set_trace()
 #2. run classifier
 classifier = svm.SVC(kernel='linear')
+
+test_pred = clf.predict(x_test)
+test_cm = clf.confusion_matrix(y_test, test_pred)
+# 4. show confusion matrix in a separate window
+plt.matshow(cm)
+plt.title('Confusion matrix')
+plt.colorbar()
+plt.ylabel('True Label')
+plt.xlabel('Predicted label')
+plt.show()
+
 print "mean accuracy score for the clf model on test data: ", clf.score(x_test, y_test)
 #show prediction results
 print "test (prediction): ", clf.predict(x_train)
