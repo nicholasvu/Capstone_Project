@@ -1,5 +1,6 @@
 '''
 author: @nicholasvu
+aided by: @wwolf, @roy, @dtherrick, @amyskerry
 08/26/2015 22:50
 
 This program was designed to answer, "Should a dose alert be overridden, cancelled,
@@ -10,11 +11,6 @@ drugs according to how much of the daily dose, single dose, and below minimum
 dose limits were exceeded. Then it assigns a score to the values under a specific
 list of features. Then the Random Forest Classifier will improve predictive accuracy
 of whether or not a dose alert will be overridden, cancelled, or viewed.
-Then the program is supposed to print out a confusion matrix.
-
-Error: Random Forest Classifier claims numbers of labels=1 does not match
-number of samples=6037. Number of samples in x and y match according
-to my records. Need to troubleshoot what issue is. Otherwise, program should run.
 
 '''
 import re
@@ -25,7 +21,6 @@ from string import letters
 import numpy as np
 import seaborn as sns
 import scipy as sp
-import logloss
 from sklearn import cross_validation
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_multilabel_classification
@@ -169,29 +164,20 @@ train = df[msk]
 test = df[~msk]
 
 #assign a classifier to Random Forest Classifier
-clf = RandomForestClassifier(n_estimators=50, n_jobs=2)
+clf = RandomForestClassifier(n_estimators=100, n_jobs=4)
 
 #x should be (n_samples, n_features) in a matrix
 x = x.as_matrix()
 
-#fit the classifier
+#fit the classifier using a multi-label indicator
+x, y = make_multilabel_classification(n_classes=4, n_labels=4, allow_unlabeled=True, return_indicator=True, random_state=1)
 clf.fit(x, y)
 
-#PLOT CONFUSION MATRIX PLOT
 # 1. split the data into a training set and a test set
 x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=0)
 #2. run classifier
 classifier = svm.SVC(kernel='linear')
-y_pred = classifier.fit(x_train, y_train).predict(x_test)
-print "test (prediction): ", y_pred
-
-# 3. Compute confusion matrix
-cm = confusion_matrix(y_test, y_pred)
-print(cm)
-# 4. show confusion matrix in a separate window
-plt.matshow(cm)
-plt.title('Confusion matrix')
-plt.colorbar()
-plt.ylabel('True Label')
-plt.xlabel('Predicted label')
-plt.show()
+print "mean accuracy score for the clf model on test data: ", clf.score(x_test, y_test)
+#show prediction results
+print "test (prediction): ", clf.predict(x_train)
+test_pred = clf.predict(x_test)
