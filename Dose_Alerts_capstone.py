@@ -2,8 +2,8 @@
 author: @nicholasvu
 08/26/2015 22:50
 
-This program was designed to answer, should a dose alert be overridden, cancelled,
-or viewed by a clinician.
+This program was designed to answer, "Should a dose alert be overridden, cancelled,
+or viewed by a clinician?"
 
 This program simply organizes the Dose_Alerts_Edits.csv data for a list of
 drugs according to how much of the daily dose, single dose, and below minimum
@@ -113,9 +113,6 @@ else 6 if Provider_Type=='Nurse Practitioner' else 5 if Provider_Type=='Physicia
 #assign strength of recommendation to Patient_Hospital/Clinic (5% of total weight)
 Hospital_Strength_Score = [2 if Patient_Hospital_Clinic =='LA JOLLA HOSPITAL HOD/OP' else 2 for Patient_Hospital_Clinic in df['Patient_Hospital_Clinic'].tolist()]
 
-#assign strength of recommendation to Patient_Department (2% of total weight)
-#Department_Strength_Score = [1 if Department_Score=='LJ EMERGENCY DEPT' else 1 for Department_Score in df['Department_Score'].tolist()]
-
 #assign strength to interaction setting (5% of total weight)
 Setting_Strength_Score = [7 if Interaction_Setting=='MODEL PHARMACIST INTERACTIONS [1010]' else 7 if Interaction_Setting=='UC PHARMACIST INTERACTIONS - OB [1080]' else 3 for Interaction_Setting in df['Interaction_Setting'].tolist()]
 
@@ -160,7 +157,6 @@ y = np.array([warning_strength_score])
 #assign features to variable x
 x['Provider_Strength_Score'] = Provider_Strength_Score
 x['Hospital_Strength_Score'] = Hospital_Strength_Score
-#x['Department_Strength_Score'] = Department_Strength_Score
 x['Setting_Strength_Score'] = Setting_Strength_Score
 x['Source_Strength_Score'] = Source_Strength_Score
 x['Context_Strength_Score'] = Context_Strength_Score
