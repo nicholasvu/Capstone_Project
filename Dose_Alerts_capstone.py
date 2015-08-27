@@ -2,10 +2,14 @@
 author: @nicholasvu
 08/26/2015 22:50
 
+This program was designed to answer, should a dose alert be overridden, cancelled,
+or viewed by a clinician.
+
 This program simply organizes the Dose_Alerts_Edits.csv data for a list of
 drugs according to how much of the daily dose, single dose, and below minimum
 dose limits were exceeded. Then it assigns a score to the values under a specific
-list of features. Then the Random Forest Classifier will improve predictive accuracy.
+list of features. Then the Random Forest Classifier will improve predictive accuracy
+of whether or not a dose alert will be overridden, cancelled, or viewed.
 Then the program is supposed to print out a confusion matrix.
 
 Error: Random Forest Classifier claims numbers of labels=1 does not match
