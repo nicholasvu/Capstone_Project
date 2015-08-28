@@ -130,9 +130,6 @@ Same_OrderSet_Panels_Strength_Score = [5 if Same_OrderSet_Panels=='N' else 5 if 
 #if the user didn't see the warning form, then there's no point in laying any weight into that clinician's action because it was misinformed
 Warning_Seen_Strength_Score = [10 if Warning_Form_Shown_To_User=='Y' else 0 for Warning_Form_Shown_To_User in df['Warning_Form_Shown_To_User'].tolist()]
 
-#assign below dose minimum percent deviation score
-#Percent_Deviation_Score = [int('below_dose_minimum') if below_dose_minimum==int('below_dose_minimum') else 0 for below_dose_minimum in df['below_dose_minimum'].tolist()]
-
 #assign score to target vector 'warning_status'
 warning_strength_score = [3 if warning_status=='Overridden' else 2 if warning_status=='Canceled' else 1 if warning_status=='Viewed' else 0 for warning_status in df['warning_status'].tolist()]
 
@@ -158,7 +155,6 @@ y = y.transpose()
 
 
 #assign features to variable x
-#x['below_dose_minimum'] = dose_alerts_for_a_drug_below
 x['Provider_Strength_Score'] = Provider_Strength_Score
 x['Hospital_Strength_Score'] = Hospital_Strength_Score
 x['Setting_Strength_Score'] = Setting_Strength_Score
@@ -185,24 +181,15 @@ clf.fit(x, y)
 x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=0)
 #2. run classifier
 classifier = svm.SVC(kernel='linear')
-'''
-test_pred = clf.predict(x_test)
-test_cm = clf.confusion_matrix(y_test, test_pred)
-# 4. show confusion matrix in a separate window
-plt.matshow(cm)
-plt.title('Confusion matrix')
-plt.colorbar()
-plt.ylabel('True Label')
-plt.xlabel('Predicted label')
-plt.show()
-'''
+
+#print respective feature_importance coefficients showing how important each feature is in predicitng target vector
 print(clf.feature_importances_)
 print "mean accuracy score for the clf model on test data: ", clf.score(x_test, y_test)
 #show prediction results
 print "test (prediction): ", clf.predict(x_train)
 test_pred = clf.predict(x_test)
 
-#compute mean error using multiclass log loss function
+#compute mean error using multiclass log loss function (this is another means of showing how accurate prediction is)
 def multiclass_log_loss(y_true, y_pred, eps=1e-15):
     """Multi class version of Logarithmic Loss metric.
     https://www.kaggle.com/wiki/MultiClassLogLoss
