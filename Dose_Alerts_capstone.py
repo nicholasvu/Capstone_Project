@@ -1,6 +1,6 @@
 '''
 author: @nicholasvu
-aided by: @wwolf, @roy, @dtherrick, @amyskerry
+aided by: @wwolf, @roy, @dtherrick
 08/26/2015 22:50
 
 This program was designed to answer, "Should a dose alert be overridden, cancelled,
