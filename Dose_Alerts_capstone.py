@@ -103,7 +103,7 @@ def dose_alerts_for_a_drug_below(drug_name_below):
   #print list3
   return df1
 
-#CREATE FEATURES AND ASSIGN SCORES TO VALUES IN EACH FEATURE (lines 89-116)
+#CREATE FEATURES AND ASSIGN SCORES TO VALUES IN EACH FEATURE (lines 89-134)
 
 #assign a strength of recommendation to the Provider_Type (15% of total weight)
 Provider_Strength_Score = [8 if Provider_Type=='Pharmacist' else 7 if Provider_Type=='Pharmacy Resident'
