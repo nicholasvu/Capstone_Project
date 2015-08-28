@@ -16,6 +16,7 @@ of whether or not a dose alert will be overridden, cancelled, or viewed.
 import re
 import pandas as pd
 import numpy as np
+import sklearn
 from sklearn.ensemble import RandomForestClassifier
 from string import letters
 import numpy as np
@@ -28,7 +29,11 @@ import pdb
 import pickle
 from sklearn import svm, datasets
 from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import StratifiedKFold as KFold
 from sklearn.metrics import confusion_matrix
+import sklearn.metrics as clf
+import pylab as pl
+import sqlite3 as lite
 
 #define df
 df = pd.read_csv('Dose_Alerts_Edited.csv')
@@ -51,8 +56,8 @@ def dose_alerts_for_a_drug(drug_name):
   df1['daily_dose_exceeds'] = list1
  #add the other two columns
   grouped = df1.groupby(['daily_dose_exceeds', 'warning_status']).count()
-  print drug_name
-  print list1
+  #print drug_name
+  #print list1
   return df1
 
 #create function to pull integer from Percent_Deviation_from_Dose column related to 'Exceeds maximum single dose limit' only
@@ -72,10 +77,9 @@ def dose_alerts_for_a_drug_single(drug_name_single):
           list2.append(0)
   df1['single_dose_exceeds'] = list2
   grouped = df1.groupby(['single_dose_exceeds', 'warning_status']).count()
-  #print drug_name_single
   #print grouped
-  print drug_name_single
-  print list2
+  #print drug_name_single
+  #print list2
   return df1
 
 #create function to pull integer from Percent_Deviation_from_Dose column related to 'Below minimum dose limit' only
@@ -92,12 +96,11 @@ def dose_alerts_for_a_drug_below(drug_name_below):
       if ('Below minimum dose limit' in df1['Percent_Deviation_from_Dose'][j]):
           list3.append(int(re.findall(r'Below minimum dose limit \((\d+)%\)', df1['Percent_Deviation_from_Dose'][j])[0]))
       else:
-          list3.append(0)
+          list3.append(((0), df1['Percent_Deviation_from_Dose'][j][0]))
   df1['below_dose_minimum'] = list3
-  #print list1[0]
   grouped = df1.groupby(['below_dose_minimum', 'warning_status']).count()
-  print drug_name_below
-  print list3
+  #print drug_name_below
+  #print list3
   return df1
 
 #CREATE FEATURES AND ASSIGN SCORES TO VALUES IN EACH FEATURE (lines 89-116)
@@ -127,6 +130,9 @@ Same_OrderSet_Panels_Strength_Score = [5 if Same_OrderSet_Panels=='N' else 5 if 
 #if the user didn't see the warning form, then there's no point in laying any weight into that clinician's action because it was misinformed
 Warning_Seen_Strength_Score = [10 if Warning_Form_Shown_To_User=='Y' else 0 for Warning_Form_Shown_To_User in df['Warning_Form_Shown_To_User'].tolist()]
 
+#assign below dose minimum percent deviation score
+#Percent_Deviation_Score = [int('below_dose_minimum') if below_dose_minimum==int('below_dose_minimum') else 0 for below_dose_minimum in df['below_dose_minimum'].tolist()]
+
 #assign score to target vector 'warning_status'
 warning_strength_score = [3 if warning_status=='Overridden' else 2 if warning_status=='Canceled' else 1 if warning_status=='Viewed' else 0 for warning_status in df['warning_status'].tolist()]
 
@@ -137,22 +143,22 @@ medicine_names = ['IPRATROPIUM-ALBUTEROL', 'CALCIUM CHLORIDE', 'IBUPROFEN', 'CEF
 'BEVACIZUMAB', 'SULFAMETHOXAZOLE-TRIMETHOPRIM', 'DILTIAZEM', 'CITRIC ACID-SODIUM CITRATE', 'COLISTIMETHATE', 'DIVALPROEX', 'PHOSPHORUS', 'CETIRIZINE', 'MIDAZOLAM',
 'DOXORUBICIN', 'FENTANYL', 'TOPIRAMATE', 'BORTEZOMIB', 'LACTULOSE', 'PALONOSETRON', 'AMPICILLIN', 'DIAZEPAM', 'ONDANSETRON', 'MEROPENEM', 'FLUDARABINE', 'MAGNESIUM HYDROXIDE', 'PHENYLEPHRINE',
 'PLERIXAFOR']
-'''
+
 for i in medicine_names:
 
     df = dose_alerts_for_a_drug_single(i)
-    pdb.set_trace()
     df2 = dose_alerts_for_a_drug_below(i)
     df3 = dose_alerts_for_a_drug(i)
-'''
+
 #assign x to a pandas dataframe
 x = pd.DataFrame()
 #assign target vector to 'warning_status' column in an array
-y = np.array([warning_strength_score])
+y = np.ravel([warning_strength_score])
 y = y.transpose()
 
+
 #assign features to variable x
-#x['single_dose_exceeds'] = df['single_dose_exceeds']
+#x['below_dose_minimum'] = dose_alerts_for_a_drug_below
 x['Provider_Strength_Score'] = Provider_Strength_Score
 x['Hospital_Strength_Score'] = Hospital_Strength_Score
 x['Setting_Strength_Score'] = Setting_Strength_Score
@@ -177,10 +183,9 @@ clf.fit(x, y)
 
 # 1. split the data into a training set and a test set
 x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=0)
-pdb.set_trace()
 #2. run classifier
 classifier = svm.SVC(kernel='linear')
-
+'''
 test_pred = clf.predict(x_test)
 test_cm = clf.confusion_matrix(y_test, test_pred)
 # 4. show confusion matrix in a separate window
@@ -190,8 +195,50 @@ plt.colorbar()
 plt.ylabel('True Label')
 plt.xlabel('Predicted label')
 plt.show()
-
+'''
+print(clf.feature_importances_)
 print "mean accuracy score for the clf model on test data: ", clf.score(x_test, y_test)
 #show prediction results
 print "test (prediction): ", clf.predict(x_train)
 test_pred = clf.predict(x_test)
+
+#compute mean error using multiclass log loss function
+def multiclass_log_loss(y_true, y_pred, eps=1e-15):
+    """Multi class version of Logarithmic Loss metric.
+    https://www.kaggle.com/wiki/MultiClassLogLoss
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+            true class, intergers in [0, n_classes - 1)
+    y_pred : array, shape = [n_samples, n_classes]
+    Returns
+    -------
+    loss : float
+    """
+    predictions = np.clip(y_pred, eps, 1 - eps)
+
+    # normalize row sums to 1
+    predictions /= predictions.sum(axis=1)[:, np.newaxis]
+
+    actual = np.zeros(y_pred.shape)
+    n_samples = actual.shape[0]
+    actual[np.arange(n_samples), y_true.astype(int)] = 1
+    vectsum = np.sum(actual * np.log(predictions))
+    loss = -1.0 / n_samples * vectsum
+    return loss
+
+if __name__ == "__main__":
+    print "Start training"
+    # Get the probability predictions for computing the log-loss function
+    kf = KFold(y, n_folds=5)
+    # prediction probabilities number of samples, by number of classes
+    y_pred = np.zeros((len(y), len(set(y))))
+    for train, test in kf:
+        x_train, x_test, y_train, y_test = x[train, :], x[test, :], y[train], y[test]
+        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=100, n_jobs=1)
+        clf.fit(x_train, y_train)
+        y_pred[test] = clf.predict_proba(x_test)
+    print "With CV", multiclass_log_loss(y, y_pred)
+    clf = sklearn.ensemble.RandomForestClassifier(n_estimators=100, n_jobs=1)
+    clf.fit(x, y)
+    y_pred = clf.predict_proba(x)
